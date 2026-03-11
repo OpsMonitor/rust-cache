@@ -70,7 +70,6 @@ async function run() {
 
     reportError(e);
   }
-  process.exit();
 }
 
 function setCacheHitOutput(cacheHit: boolean): void {
