@@ -11,6 +11,12 @@ process.on("uncaughtException", (e) => {
   }
 });
 
+// Handle unhandled promise rejections (common in Node 24 with streams)
+process.on("unhandledRejection", (reason) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  core.warning(`Unhandled rejection in cache operation: ${message}`);
+});
+
 async function run() {
   const cacheProvider = getCacheProvider();
 
@@ -76,4 +82,9 @@ function setCacheHitOutput(cacheHit: boolean): void {
   core.setOutput("cache-hit", cacheHit.toString());
 }
 
-run();
+// Properly handle async completion to avoid Node 24 stream errors
+run().catch((error) => {
+  // Don't fail the workflow for cache errors, just log them
+  core.warning(`Cache restore failed: ${error instanceof Error ? error.message : String(error)}`);
+  setCacheHitOutput(false);
+});
